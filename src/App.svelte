@@ -5,7 +5,9 @@
 <div class="w-full min-h-screen bg-[#111] text-white px-12 py-8">
   <div class="text-4xl font-bold">My Sounds</div>
   <div class="py-6" />
-  <div class="grid grid-cols-4 gap-4">
+  <div
+    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+  >
     <SoundItem />
     <SoundItem />
     <SoundItem />

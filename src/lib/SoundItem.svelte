@@ -34,7 +34,7 @@
   }}
 >
   <div
-    class="context-menu bg-black/70 text-white rounded-lg p-2 absolute z-50 w-48 backdrop-blur filter gap-y-4"
+    class="context-menu bg-black/70 text-white rounded-lg p-2 absolute z-50 w-48 backdrop-blur filter gap-y-4 hidden"
     bind:this={contextMenu}
   >
     <p
