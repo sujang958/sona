@@ -11,6 +11,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@tailwindcss/forms": "^0.5.3",
     "@tauri-apps/api": "^1.2.0"
   },
   "devDependencies": {
