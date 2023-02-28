@@ -4,10 +4,6 @@
 
   document.addEventListener("click", (event) => {
     if (!(event.target instanceof HTMLElement)) return
-
-    console.log(event.target)
-    console.log(contextMenu.contains(event.target))
-
     if (contextMenu.contains(event.target)) return
 
     contextMenu.style.display = "none"
