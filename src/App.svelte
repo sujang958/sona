@@ -1,10 +1,34 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import SoundItem from "./lib/SoundItem.svelte"
-  import { appDataDir, join } from "@tauri-apps/api/path"
+  import { BaseDirectory } from "@tauri-apps/api/path"
   import { writeFile } from "@tauri-apps/api/fs"
 
   let audioFileSelector: HTMLInputElement
+
+  let modalShown = false
+
+  let audioContent: string = ""
+  let audioName: string = ""
+  let audioKeybind: string = ""
+
+  const finishAddingAudio = async () => {
+    await writeFile(audioName, audioContent, { dir: BaseDirectory.AppData })
+
+    audioContent = ""
+    audioName = ""
+    audioKeybind = ""
+
+    modalShown = false
+  }
+
+  const cancelAddingAudio = async () => {
+    audioContent = ""
+    audioName = ""
+    audioKeybind = ""
+
+    modalShown = false
+  }
 
   onMount(async () => {
     const fileReader = new FileReader()
@@ -12,18 +36,19 @@
     audioFileSelector.addEventListener("change", () => {
       fileReader.readAsDataURL(audioFileSelector.files[0])
       fileReader.addEventListener("loadend", async (event) => {
-        const name = prompt("Name")
+        audioContent = event.target.result.toString()
 
-        console.log(name)
-
-        const appDataDirPath = await appDataDir()
-        // todo: store event.target.result in appdata path and maybe make name unique per an audio?
+        modalShown = true
       })
     })
   })
 </script>
 
-<div class="fixed bg-black/50 w-full h-screen z-50 grid place-items-center">
+<div
+  class={`${
+    modalShown ? "grid" : "hidden"
+  } fixed bg-black/50 w-full h-screen z-50 place-items-center`}
+>
   <div class="bg-black text-white flex flex-col rounded-lg px-10 py-6 gap-y-3">
     <p class="text-3xl font-bold">One More Step</p>
     <div class="pt-0.5" />
@@ -33,6 +58,7 @@
         type="text"
         class="bg-black rounded-lg border-b border-gray-800 px-3 py-1 outline-none mt-1.5"
         placeholder="Name"
+        bind:value={audioName}
       />
     </label>
     <label class="py-1 w-full">
@@ -42,15 +68,22 @@
         class="bg-black rounded-lg border-b border-gray-800 px-3 py-1 outline-none mt-1.5 cursor-pointer"
         placeholder="Click hero to bind keys"
         disabled
+        bind:value={audioKeybind}
       />
     </label>
     <div class="py-3" />
     <div class="flex flex-row items-center justify-end w-full gap-x-4">
       <button
+        on:click={() => {
+          cancelAddingAudio()
+        }}
         class="transition duration-200 hover:bg-red-700 border border-red-700 rounded-lg px-4 py-1"
         >Cancel</button
       >
       <button
+        on:click={() => {
+          finishAddingAudio()
+        }}
         class="transition duration-200 hover:bg-blue-700 border border-blue-700 rounded-lg px-4 py-1"
         >Add</button
       >
