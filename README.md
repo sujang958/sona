@@ -1,7 +1,5 @@
-# Tauri + Svelte + Typescript
+# Sona
 
-This template should help get you started developing with Tauri, Svelte and TypeScript in Vite.
+> An Alternative of Voicemod's Soundboard
 
-## Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
+## IT'S NOT COMPLETED YET, PLEASE BE PATIENT
