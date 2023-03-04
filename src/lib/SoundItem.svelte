@@ -3,15 +3,30 @@
   let contextMenu: HTMLDivElement
 
   document.addEventListener("click", (event) => {
-    if (!(event.target instanceof HTMLElement)) return
-    if (contextMenu.contains(event.target)) return
+    try {
+      if (!(event.target instanceof HTMLElement)) return
+      if (contextMenu.contains(event.target)) return
 
-    contextMenu.style.display = "none"
+      contextMenu.style.display = "none"
+    } catch (e) {
+      console.log(e)
+    }
   })
+
+  export let name: string = "Not Found"
+  export let keybinding: string = "Not Found"
+  export let image: string = "/icon.ico"
+  export let audioContent: string = ""
+
+  const audio = new Audio(audioContent)
+
+  $: console.log(audio.paused)
 </script>
 
 <div
-  class="flex flex-col items-center cursor-pointer select-none relative"
+  class={`flex flex-col items-center cursor-pointer select-none relative rounded-lg transition duration-200 hover:bg-white/5 ${
+    !audio.paused && "bg-white/5"
+  } py-8`}
   on:contextmenu={(event) => {
     event.preventDefault()
     for (const otherContextMenu of document.querySelectorAll(".context-menu")) {
@@ -27,6 +42,13 @@
     contextMenu.style.transform = `translate(${event.clientX - rect.x}px, ${
       event.clientY - rect.y
     }px)`
+  }}
+  on:click={() => {
+    if (audio.paused) audio.play()
+    else audio.pause()
+  }}
+  on:dblclick={() => {
+    audio.currentTime = 0
   }}
 >
   <div
@@ -52,7 +74,7 @@
   <div class="group relative">
     <img
       draggable="false"
-      src="/icon.ico"
+      src={image}
       alt="Icon"
       class="object-contain w-[5.6rem] h-[5.6rem]"
     />
@@ -81,7 +103,7 @@
   </div>
   <div class="py-2" />
   <div class="text-center">
-    <p class="text-xl font-bold">Hey, S3X?</p>
-    <div class="text-base uppercase text-gray-300 mt-1">Ctrl+1</div>
+    <p class="text-xl font-bold">{name.split(".sonaaudio")[0]}</p>
+    <div class="text-base uppercase text-gray-300 mt-1">{keybinding}</div>
   </div>
 </div>

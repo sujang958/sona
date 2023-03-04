@@ -2,7 +2,15 @@
   import { onMount } from "svelte"
   import SoundItem from "./lib/SoundItem.svelte"
   import { BaseDirectory } from "@tauri-apps/api/path"
-  import { writeFile } from "@tauri-apps/api/fs"
+  import { encode, decode } from "@msgpack/msgpack"
+  import {
+    exists,
+    createDir,
+    readDir,
+    readBinaryFile,
+    writeBinaryFile,
+  } from "@tauri-apps/api/fs"
+  import type { SonaAudioFile } from "./lib/SonaAudioFile"
 
   let audioFileSelector: HTMLInputElement
 
@@ -11,15 +19,64 @@
   let audioContent: string = ""
   let audioName: string = ""
   let audioKeybind: string = ""
+  let audios: SonaAudioFile[] = []
+
+  const loadAudio = async () => {
+    if (!(await exists("audios/", { dir: BaseDirectory.AppLocalData })))
+      await createDir("audios/", { dir: BaseDirectory.AppLocalData })
+
+    const _audios: SonaAudioFile[] = []
+    const loadedAudios = (
+      await readDir("audios", { dir: BaseDirectory.AppLocalData })
+    )
+      .filter((audio) => audio.name.endsWith(".sonaaudio"))
+      .map(
+        async (audio) =>
+          await readBinaryFile(`audios/${audio.name}`, {
+            dir: BaseDirectory.AppLocalData,
+          })
+      )
+      .map(async (wait) => {
+        try {
+          const audio = await wait
+          return decode(audio) as SonaAudioFile
+        } catch (e) {
+          return null
+        }
+      })
+      .filter(async (v) => await v)
+
+    for (const audio of loadedAudios) {
+      _audios.push(await audio)
+    }
+
+    audios = _audios
+
+    return _audios
+  }
 
   const finishAddingAudio = async () => {
-    await writeFile(audioName, audioContent, { dir: BaseDirectory.AppData })
+    if (audioName.length < 1) return
 
-    audioContent = ""
-    audioName = ""
-    audioKeybind = ""
+    const audios = await loadAudio()
 
-    modalShown = false
+    if (audios.map((v) => v.name).includes(audioName))
+      return await cancelAddingAudio()
+
+    await writeBinaryFile(
+      `audios/${audioName}.sonaaudio`,
+      encode({
+        audio: audioContent,
+        keybinding: audioKeybind,
+        name: audioName,
+      } as SonaAudioFile),
+      {
+        dir: BaseDirectory.AppLocalData,
+      }
+    )
+
+    await loadAudio()
+    await cancelAddingAudio()
   }
 
   const cancelAddingAudio = async () => {
@@ -31,6 +88,8 @@
   }
 
   onMount(async () => {
+    loadAudio()
+
     const fileReader = new FileReader()
 
     audioFileSelector.addEventListener("change", () => {
@@ -104,9 +163,13 @@
   <div
     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
   >
-    <SoundItem />
-    <SoundItem />
-    <SoundItem />
+    {#each audios as audio}
+      <SoundItem
+        name={audio.name}
+        keybinding={audio.keybinding}
+        audioContent={audio.audio}
+      />
+    {/each}
   </div>
 </div>
 
