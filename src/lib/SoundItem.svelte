@@ -18,14 +18,22 @@
   export let image: string = "/icon.ico"
   export let audioContent: string = ""
 
+  let audioPlaying = false
+
   const audio = new Audio(audioContent)
 
-  $: console.log(audio.paused)
+  audio.addEventListener("pause", () => {
+    audioPlaying = false
+  })
+
+  audio.addEventListener("play", () => {
+    audioPlaying = true
+  })
 </script>
 
 <div
   class={`flex flex-col items-center cursor-pointer select-none relative rounded-lg transition duration-200 hover:bg-white/5 ${
-    !audio.paused && "bg-white/5"
+    audioPlaying && "bg-white/5"
   } py-8`}
   on:contextmenu={(event) => {
     event.preventDefault()
@@ -44,11 +52,10 @@
     }px)`
   }}
   on:click={() => {
-    if (audio.paused) audio.play()
-    else audio.pause()
-  }}
-  on:dblclick={() => {
-    audio.currentTime = 0
+    if (audio.paused) {
+      audio.currentTime = 0
+      audio.play()
+    } else audio.pause()
   }}
 >
   <div
