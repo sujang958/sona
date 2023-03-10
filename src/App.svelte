@@ -11,6 +11,7 @@
     writeBinaryFile,
   } from "@tauri-apps/api/fs"
   import type { SonaAudioFile } from "./lib/SonaAudioFile"
+  import { getAudioNames } from "./lib/SonaAudio"
 
   let audioFileSelector: HTMLInputElement
 
@@ -19,49 +20,18 @@
   let audioContent: string = ""
   let audioName: string = ""
   let audioKeybind: string = ""
-  let audios: SonaAudioFile[] = []
+  let audios: string[] = []
 
   const loadAudio = async () => {
-    if (!(await exists("audios/", { dir: BaseDirectory.AppLocalData })))
-      await createDir("audios/", { dir: BaseDirectory.AppLocalData })
-
-    const _audios: SonaAudioFile[] = []
-    const loadedAudios = (
-      await readDir("audios", { dir: BaseDirectory.AppLocalData })
-    )
-      .filter((audio) => audio.name.endsWith(".sonaaudio"))
-      .map(
-        async (audio) =>
-          await readBinaryFile(`audios/${audio.name}`, {
-            dir: BaseDirectory.AppLocalData,
-          })
-      )
-      .map(async (wait) => {
-        try {
-          const audio = await wait
-          return decode(audio) as SonaAudioFile
-        } catch (e) {
-          return null
-        }
-      })
-      .filter(async (v) => await v)
-
-    for (const audio of loadedAudios) {
-      _audios.push(await audio)
-    }
-
-    audios = _audios
-
-    return _audios
+    audios = await getAudioNames()
   }
 
   const finishAddingAudio = async () => {
     if (audioName.length < 1) return
 
-    const audios = await loadAudio()
+    const audios = await getAudioNames()
 
-    if (audios.map((v) => v.name).includes(audioName))
-      return await cancelAddingAudio()
+    if (audios.includes(audioName)) return await cancelAddingAudio()
 
     await writeBinaryFile(
       `audios/${audioName}.sonaaudio`,
@@ -165,9 +135,7 @@
   >
     {#each audios as audio}
       <SoundItem
-        name={audio.name}
-        keybinding={audio.keybinding}
-        audioContent={audio.audio}
+        name={audio}
       />
     {/each}
   </div>
