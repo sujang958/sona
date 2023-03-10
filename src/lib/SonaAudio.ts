@@ -4,6 +4,8 @@ import {
   readDir,
   readBinaryFile,
   writeBinaryFile,
+  readTextFile,
+  removeFile,
 } from "@tauri-apps/api/fs"
 import { BaseDirectory } from "@tauri-apps/api/path"
 import type { SonaAudioConfigFile } from "./SonaAudioFile"
@@ -38,4 +40,33 @@ export const getAudioConfigByName = async (
   const audioFile = decode(file) as SonaAudioConfigFile
 
   return audioFile
+}
+
+export const getAudioByName = async (name: string): Promise<string> => {
+  const audioFile = await readTextFile(`audios/${name}.sonaaudio`, {
+    dir: BaseDirectory.AppLocalData,
+  })
+
+  return audioFile
+}
+
+/**
+ * Removes an audio and a config file by name
+ * @returns if false, not successfully removed
+ */
+export const removeAudioByName = async (name: string): Promise<boolean> => {
+  const names = await getAudioNames()
+
+  if (!names.includes(name)) return false
+
+  await Promise.all([
+    removeFile(`audios/${name}.sonaaudio`, {
+      dir: BaseDirectory.AppLocalData,
+    }),
+    removeFile(`audios/${name}.config.sonaaudio`, {
+      dir: BaseDirectory.AppLocalData,
+    }),
+  ])
+
+  return true
 }

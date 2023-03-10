@@ -26,6 +26,14 @@
       },
       "globalShortcut": {
         "all": true
+      },
+      "dialog": {
+        "all": false,
+        "ask": false,
+        "confirm": true,
+        "message": false,
+        "open": false,
+        "save": false
       }
     },
     "bundle": {

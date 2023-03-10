@@ -136,6 +136,7 @@
     </div>
   </div>
 </div>
+<!-- todo: add loading animations when click the "Add" button -->
 
 <input
   type="file"
@@ -147,13 +148,30 @@
 <div class="w-full min-h-screen bg-[#111] text-white px-12 py-8">
   <div class="text-4xl font-bold">My Sounds</div>
   <div class="py-6" />
-  <div
-    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
-  >
-    {#each audios as audio}
-      <SoundItem name={audio} />
-    {/each}
-  </div>
+
+  {#if audios.length < 1}
+    <div class="grid place-items-center py-36">
+      <div class="text-center">
+        <p class="text-3xl font-bold">No Audio Found</p>
+        <p class="text-xl text-gray-400">
+          Click the "+" button to add an audio
+        </p>
+      </div>
+    </div>
+  {:else}
+    <div
+      class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+    >
+      {#each audios as audio}
+        <SoundItem
+          name={audio}
+          onRemove={() => {
+            loadAudio()
+          }}
+        />
+      {/each}
+    </div>
+  {/if}
 </div>
 
 <div class="fixed bottom-8 right-12">

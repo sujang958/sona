@@ -1,12 +1,17 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <script lang="ts">
-  import { BaseDirectory, readTextFile } from "@tauri-apps/api/fs"
+  import { confirm } from "@tauri-apps/api/dialog"
   import {
     isRegistered,
     register,
     unregister,
   } from "@tauri-apps/api/globalShortcut"
-  import { getAudioConfigByName } from "./SonaAudio"
+  import { onDestroy } from "svelte"
+  import {
+    getAudioByName,
+    getAudioConfigByName,
+    removeAudioByName,
+  } from "./SonaAudio"
   import type { SonaAudioConfigFile } from "./SonaAudioFile"
 
   let contextMenu: HTMLDivElement
@@ -23,6 +28,7 @@
   })
 
   export let name: string = "Not Found"
+  export let onRemove: () => any | Promise<any> = () => {}
 
   let image = "icon.ico"
 
@@ -51,11 +57,7 @@
       })
     })
 
-    audio = new Audio(
-      await readTextFile(`audios/${audioConfig.name}.sonaaudio`, {
-        dir: BaseDirectory.AppLocalData,
-      })
-    )
+    audio = new Audio(await getAudioByName(audioConfig.name))
 
     audio.addEventListener("pause", () => {
       audioPlaying = false
@@ -71,6 +73,10 @@
   }
 
   loadAudio()
+
+  onDestroy(() => {
+    unregister(audioConfig.keybinding)
+  })
 </script>
 
 {#if audio && audioConfig}
@@ -90,11 +96,6 @@
 
       contextMenu.style.display = "block" // keep this line above the const rect = ...
 
-      const rect = contextMenu.getBoundingClientRect()
-
-      // contextMenu.style.transform = `translate(${event.clientX - rect.x}px, ${
-      //   event.clientY - rect.y
-      // }px)`
       contextMenu.style.setProperty("--mouse-x", event.clientX + "px")
       contextMenu.style.setProperty("--mouse-y", event.clientY + "px")
     }}
@@ -119,6 +120,18 @@
       </p>
       <p
         class="text-base transition duration-300 hover:bg-white/30 py-1 px-4 rounded-lg text-red-500"
+        on:click={async () => {
+          const preventPlaying = () => {
+            audio.pause()
+          }
+          audio.addEventListener("play", preventPlaying)
+          if (!(await confirm("You sure?")))
+            return audio.removeEventListener("play", preventPlaying)
+            
+          audio.remove()
+          await removeAudioByName(audioConfig.name)
+          onRemove()
+        }}
       >
         Delete
       </p>
