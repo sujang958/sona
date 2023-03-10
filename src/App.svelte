@@ -99,8 +99,20 @@
         type="text"
         class="bg-black rounded-lg border-b border-gray-800 px-3 py-1 outline-none mt-1.5 cursor-pointer"
         placeholder="Click hero to bind keys"
-        disabled
         bind:value={audioKeybind}
+        on:keydown={(event) => {
+          audioKeybind = ""
+          event.preventDefault()
+
+          const key = event.key.toUpperCase()
+
+          audioKeybind = `${event.ctrlKey ? "Control" : ""}${
+            event.shiftKey ? "+Shift" : ""
+          }${event.altKey ? "+Alt" : ""}`
+          if (audioKeybind.trim().length > 0) audioKeybind += "+"
+
+          if (!["CONTROL", "SHIFT", "ALT"].includes(key)) audioKeybind += key
+        }}
       />
     </label>
     <div class="py-3" />

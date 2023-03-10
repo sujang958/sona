@@ -2,6 +2,11 @@
 <script lang="ts">
   import { BaseDirectory, readTextFile } from "@tauri-apps/api/fs"
   import { appLocalDataDir, join } from "@tauri-apps/api/path"
+  import {
+    isRegistered,
+    register,
+    unregister,
+  } from "@tauri-apps/api/globalShortcut"
   import { getAudioConfigByName } from "./SonaAudio"
   import type { SonaAudioConfigFile } from "./SonaAudioFile"
 
@@ -26,8 +31,27 @@
   let audio: HTMLAudioElement | null = null
   let audioPlaying = false
 
+  const playAudio = () => {
+    if (audio.paused) {
+      audio.currentTime = 0
+      audio.play()
+    } else audio.pause()
+  }
+
   const loadAudio = async () => {
     audioConfig = await getAudioConfigByName(name)
+
+    isRegistered(audioConfig.keybinding).then(async (yes) => {
+      if (yes) await unregister(audioConfig.keybinding)
+
+      register(audioConfig.keybinding, () => {
+        playAudio()
+      }).catch(() => {
+        audio = null
+        audioConfig = null
+      })
+    })
+
     audio = new Audio(
       await readTextFile(`audios/${audioConfig.name}.sonaaudio`, {
         dir: BaseDirectory.AppLocalData,
@@ -74,10 +98,7 @@
       }px)`
     }}
     on:click={() => {
-      if (audio.paused) {
-        audio.currentTime = 0
-        audio.play()
-      } else audio.pause()
+      playAudio()
     }}
   >
     <div
