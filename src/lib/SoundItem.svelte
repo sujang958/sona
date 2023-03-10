@@ -1,7 +1,6 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <script lang="ts">
   import { BaseDirectory, readTextFile } from "@tauri-apps/api/fs"
-  import { appLocalDataDir, join } from "@tauri-apps/api/path"
   import {
     isRegistered,
     register,
@@ -93,17 +92,20 @@
 
       const rect = contextMenu.getBoundingClientRect()
 
-      contextMenu.style.transform = `translate(${event.clientX - rect.x}px, ${
-        event.clientY - rect.y
-      }px)`
+      // contextMenu.style.transform = `translate(${event.clientX - rect.x}px, ${
+      //   event.clientY - rect.y
+      // }px)`
+      contextMenu.style.setProperty("--mouse-x", event.clientX + "px")
+      contextMenu.style.setProperty("--mouse-y", event.clientY + "px")
     }}
     on:click={() => {
       playAudio()
     }}
   >
     <div
-      class="context-menu bg-black/70 text-white rounded-lg p-2 absolute z-50 w-48 backdrop-blur filter gap-y-4 hidden"
+      class="context-menu bg-black/70 text-white rounded-lg p-2 fixed z-50 w-48 backdrop-blur filter gap-y-4 hidden left-0 top-0"
       bind:this={contextMenu}
+      style="transform: translateX(min(var(--mouse-x), calc(100vw - 100%))) translateY(min(var(--mouse-y), calc(100vh - 100%)));"
     >
       <p
         class="text-base transition duration-300 hover:bg-white/30 py-1 px-4 rounded-lg"

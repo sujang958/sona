@@ -112,6 +112,8 @@
           if (audioKeybind.trim().length > 0) audioKeybind += "+"
 
           if (!["CONTROL", "SHIFT", "ALT"].includes(key)) audioKeybind += key
+
+          // decision to make: prevent duplicated keybinding or leave it on purpose
         }}
       />
     </label>
