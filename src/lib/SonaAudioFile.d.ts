@@ -1,5 +1,4 @@
-export type SonaAudioFile = {
+export type SonaAudioConfigFile = {
   name: string
   keybinding: string
-  audio: string
 }

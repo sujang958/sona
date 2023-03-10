@@ -6,7 +6,7 @@ import {
   writeBinaryFile,
 } from "@tauri-apps/api/fs"
 import { BaseDirectory } from "@tauri-apps/api/path"
-import type { SonaAudioFile } from "./SonaAudioFile"
+import type { SonaAudioConfigFile } from "./SonaAudioFile"
 import { decode } from "@msgpack/msgpack"
 
 export const getAudioNames = async () => {
@@ -14,9 +14,10 @@ export const getAudioNames = async () => {
     await createDir("audios/", { dir: BaseDirectory.AppLocalData })
 
   const names = (await readDir("audios", { dir: BaseDirectory.AppLocalData }))
-    .filter((audio) => audio.name.endsWith(".sonaaudio"))
+    .filter((audio) => audio.name.endsWith(".config.sonaaudio"))
     .map((v) => {
       let splitted = v.name.split(".")
+      splitted.pop()
       splitted.pop()
 
       return splitted.join(".")
@@ -25,14 +26,16 @@ export const getAudioNames = async () => {
   return names
 }
 
-export const getAudioByName = async (name: string): Promise<SonaAudioFile> => {
+export const getAudioConfigByName = async (
+  name: string
+): Promise<SonaAudioConfigFile> => {
   await getAudioNames()
 
-  const file = await readBinaryFile(`audios/${name}.sonaaudio`, {
+  const file = await readBinaryFile(`audios/${name}.config.sonaaudio`, {
     dir: BaseDirectory.AppLocalData,
   })
 
-  const audioFile = decode(file) as SonaAudioFile
+  const audioFile = decode(file) as SonaAudioConfigFile
 
   return audioFile
 }

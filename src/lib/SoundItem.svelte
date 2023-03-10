@@ -1,7 +1,9 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <script lang="ts">
-  import { getAudioByName } from "./SonaAudio"
-  import type { SonaAudioFile } from "./SonaAudioFile"
+  import { BaseDirectory, readTextFile } from "@tauri-apps/api/fs"
+  import { appLocalDataDir, join } from "@tauri-apps/api/path"
+  import { getAudioConfigByName } from "./SonaAudio"
+  import type { SonaAudioConfigFile } from "./SonaAudioFile"
 
   let contextMenu: HTMLDivElement
 
@@ -20,15 +22,17 @@
 
   let image = "icon.ico"
 
-  let audioFile: SonaAudioFile | null = null
+  let audioConfig: SonaAudioConfigFile | null = null
   let audio: HTMLAudioElement | null = null
   let audioPlaying = false
 
   const loadAudio = async () => {
-    const _audio = await getAudioByName(name)
-
-    audioFile = _audio
-    audio = new Audio(_audio.audio)
+    audioConfig = await getAudioConfigByName(name)
+    audio = new Audio(
+      await readTextFile(`audios/${audioConfig.name}.sonaaudio`, {
+        dir: BaseDirectory.AppLocalData,
+      })
+    )
 
     audio.addEventListener("pause", () => {
       audioPlaying = false
@@ -37,15 +41,19 @@
     audio.addEventListener("play", () => {
       audioPlaying = true
     })
+
+    audio.addEventListener("loadeddata", () => {
+      console.log("loaded")
+    })
   }
 
   loadAudio()
 </script>
 
-{#if audio && audioFile}
+{#if audio && audioConfig}
   <div
-    class={`flex flex-col items-center cursor-pointer select-none relative rounded-lg transition duration-200 hover:bg-white/5 ${
-      audioPlaying && "bg-white/5"
+    class={`flex flex-col items-center cursor-pointer select-none relative rounded-lg transition duration-200 ${
+      audioPlaying ? "bg-violet-500" : "hover:bg-white/5"
     } py-8`}
     on:contextmenu={(event) => {
       event.preventDefault()
@@ -128,7 +136,7 @@
     <div class="text-center">
       <p class="text-xl font-bold">{name.split(".sonaaudio")[0]}</p>
       <div class="text-base uppercase text-gray-300 mt-1">
-        {audioFile.keybinding}
+        {audioConfig.keybinding}
       </div>
     </div>
   </div>

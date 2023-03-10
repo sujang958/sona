@@ -9,8 +9,9 @@
     readDir,
     readBinaryFile,
     writeBinaryFile,
+    writeTextFile,
   } from "@tauri-apps/api/fs"
-  import type { SonaAudioFile } from "./lib/SonaAudioFile"
+  import type { SonaAudioConfigFile } from "./lib/SonaAudioFile"
   import { getAudioNames } from "./lib/SonaAudio"
 
   let audioFileSelector: HTMLInputElement
@@ -33,13 +34,15 @@
 
     if (audios.includes(audioName)) return await cancelAddingAudio()
 
+    await writeTextFile(`audios/${audioName}.sonaaudio`, audioContent, {
+      dir: BaseDirectory.AppLocalData,
+    })
     await writeBinaryFile(
-      `audios/${audioName}.sonaaudio`,
+      `audios/${audioName}.config.sonaaudio`,
       encode({
-        audio: audioContent,
         keybinding: audioKeybind,
         name: audioName,
-      } as SonaAudioFile),
+      } as SonaAudioConfigFile),
       {
         dir: BaseDirectory.AppLocalData,
       }
@@ -134,9 +137,7 @@
     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
   >
     {#each audios as audio}
-      <SoundItem
-        name={audio}
-      />
+      <SoundItem name={audio} />
     {/each}
   </div>
 </div>
