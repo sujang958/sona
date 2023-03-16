@@ -13,6 +13,7 @@
   } from "@tauri-apps/api/fs"
   import type { SonaAudioConfigFile } from "./lib/SonaAudioFile"
   import { getAudioNames } from "./lib/SonaAudio"
+  import { getInputKeybinding } from "./lib/GetInputKeybinding"
 
   let audioFileSelector: HTMLInputElement
 
@@ -104,16 +105,10 @@
           audioKeybind = ""
           event.preventDefault()
 
-          const key = event.key.toUpperCase()
-
-          audioKeybind = `${event.ctrlKey ? "Control" : ""}${
-            event.shiftKey ? "+Shift" : ""
-          }${event.altKey ? "+Alt" : ""}`
-          if (audioKeybind.trim().length > 0) audioKeybind += "+"
-
-          if (!["CONTROL", "SHIFT", "ALT"].includes(key)) audioKeybind += key
+          audioKeybind = getInputKeybinding(event)
 
           // decision to make: prevent duplicated keybinding or leave it on purpose
+          // i think it can't, because tauri's globalshortcut doesn't allow me to register duplicated keybinding
         }}
       />
     </label>

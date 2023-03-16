@@ -7,6 +7,7 @@
     unregister,
   } from "@tauri-apps/api/globalShortcut"
   import { onDestroy } from "svelte"
+  import { getInputKeybinding } from "./GetInputKeybinding"
   import {
     getAudioByName,
     getAudioConfigByName,
@@ -36,7 +37,25 @@
   let audio: HTMLAudioElement | null = null
   let audioPlaying = false
 
-  const playAudio = () => {
+  let keybindingInput: HTMLInputElement
+
+  const preventPlaying = () => {
+    const stopPlaying = () => audio.pause()
+    audio.addEventListener("play", stopPlaying)
+
+    return () => audio.removeEventListener("play", stopPlaying)
+  }
+
+  const removeAudio = async () => {
+    const disarm = preventPlaying()
+    if (!(await confirm("You sure?"))) return disarm()
+
+    audio.remove()
+    await removeAudioByName(audioConfig.name)
+    onRemove()
+  }
+
+  const togglePlayAudio = () => {
     if (audio.paused) {
       audio.currentTime = 0
       audio.play()
@@ -50,7 +69,7 @@
       if (yes) await unregister(audioConfig.keybinding)
 
       register(audioConfig.keybinding, () => {
-        playAudio()
+        togglePlayAudio()
       }).catch(() => {
         audio = null
         audioConfig = null
@@ -100,7 +119,7 @@
       contextMenu.style.setProperty("--mouse-y", event.clientY + "px")
     }}
     on:click={() => {
-      playAudio()
+      togglePlayAudio()
     }}
   >
     <div
@@ -115,22 +134,30 @@
       </p>
       <p
         class="text-base transition duration-300 hover:bg-white/30 py-1 px-4 rounded-lg"
+        on:click={async () => {
+          const disarm = preventPlaying()
+
+          keybindingInput.disabled = false
+          keybindingInput.focus()
+          keybindingInput.click()
+
+          document.addEventListener("click", (event) => {
+            if (event.target != keybindingInput) return
+
+            keybindingInput.disabled = true
+
+            // todo: add changing keybinding and savng it
+
+            disarm()
+          })
+        }}
       >
         Change keybinding
       </p>
       <p
         class="text-base transition duration-300 hover:bg-white/30 py-1 px-4 rounded-lg text-red-500"
         on:click={async () => {
-          const preventPlaying = () => {
-            audio.pause()
-          }
-          audio.addEventListener("play", preventPlaying)
-          if (!(await confirm("You sure?")))
-            return audio.removeEventListener("play", preventPlaying)
-            
-          audio.remove()
-          await removeAudioByName(audioConfig.name)
-          onRemove()
+          removeAudio()
         }}
       >
         Delete
@@ -171,8 +198,20 @@
     <div class="py-2" />
     <div class="text-center">
       <p class="text-xl font-bold">{name.split(".sonaaudio")[0]}</p>
-      <div class="text-base uppercase text-gray-300 mt-1">
-        {audioConfig.keybinding}
+      <div class="relative">
+        <input
+          type="text"
+          bind:value={audioConfig.keybinding}
+          bind:this={keybindingInput}
+          on:keydown={(event) => {
+            audioConfig.keybinding = ""
+            event.preventDefault()
+
+            audioConfig.keybinding = getInputKeybinding(event)
+          }}
+          disabled
+          class="w-36 appearance-none z-50 bg-transparent border-none text-base uppercase text-gray-300 text-center py-1 rounded-lg"
+        />
       </div>
     </div>
   </div>
