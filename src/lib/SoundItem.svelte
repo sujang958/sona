@@ -146,7 +146,7 @@
 
             keybindingInput.disabled = true
 
-            // todo: add changing keybinding and savng it
+            // TODO: add changing keybinding and savng it
 
             disarm()
           })

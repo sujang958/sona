@@ -8,12 +8,12 @@ export const getInputKeybinding = (
 
   const key = event.key.toUpperCase()
 
-  audioKeybind = `${event.ctrlKey ? "Control" : ""}${
-    event.shiftKey ? "+Shift" : ""
-  }${event.altKey ? "+Alt" : ""}`
-  if (audioKeybind.trim().length > 0) audioKeybind += "+"
+  audioKeybind = `${event.ctrlKey ? "Control+" : ""}${
+    event.shiftKey ? "Shift+" : ""
+  }${event.altKey ? "Alt+" : ""}`
 
   if (!["CONTROL", "SHIFT", "ALT"].includes(key)) audioKeybind += key
+  else audioKeybind = audioKeybind.replace("+", "")
 
   return audioKeybind
 }
