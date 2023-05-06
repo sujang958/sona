@@ -40,7 +40,7 @@
 
   let keybindingInput: HTMLInputElement
 
-  let unregisterPreviousShortcut: null | (() => any) = null
+  let unregisterPreviousShortcut: () => any = () => false
 
   const preventPlaying = () => {
     const stopPlaying = () => audio.pause()
@@ -86,8 +86,10 @@
           audioConfig = null
         })
         .then(() => {
-          unregisterPreviousShortcut = async () =>
-            await unregister(`${audioConfig.keybinding}`)
+          const copy = audioConfig.keybinding.trim()
+          unregisterPreviousShortcut = async () => {
+            await unregister(copy)
+          }
         })
     })
 
@@ -150,13 +152,11 @@
       <p
         class="text-base transition duration-300 hover:bg-white/30 py-1 px-4 rounded-lg"
         on:click={async () => {
-          const disarm = preventPlaying()
-
           keybindingInput.disabled = false
           keybindingInput.focus()
           keybindingInput.click()
 
-          document.addEventListener("click", async (event) => {
+          const onClick = async (event) => {
             if (!(event.target instanceof HTMLElement)) return
             if (
               event.target == keybindingInput ||
@@ -165,9 +165,10 @@
               return
 
             await changeKeybind()
+            document.removeEventListener("click", onClick)
+          }
 
-            disarm()
-          })
+          document.addEventListener("click", onClick)
         }}
       >
         Change keybinding
