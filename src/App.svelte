@@ -29,6 +29,7 @@
   }
 
   const finishAddingAudio = async () => {
+    // TODO: 리팩토링, 이 함수를 sonaaudio.ts 로 옮기기
     if (audioName.length < 1) return
 
     const audios = await getAudioNames()

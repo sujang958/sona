@@ -12,6 +12,7 @@
     getAudioByName,
     getAudioConfigByName,
     removeAudioByName,
+    updateAudioConfig,
   } from "./SonaAudio"
   import type { SonaAudioConfigFile } from "./SonaAudioFile"
 
@@ -39,6 +40,8 @@
 
   let keybindingInput: HTMLInputElement
 
+  let unregisterPreviousShortcut: null | (() => any) = null
+
   const preventPlaying = () => {
     const stopPlaying = () => audio.pause()
     audio.addEventListener("play", stopPlaying)
@@ -62,6 +65,13 @@
     } else audio.pause()
   }
 
+  const changeKeybind = async () => {
+    await unregisterPreviousShortcut()
+    await updateAudioConfig(name, audioConfig)
+    await loadAudio()
+    keybindingInput.disabled = true
+  }
+
   const loadAudio = async () => {
     audioConfig = await getAudioConfigByName(name)
 
@@ -70,10 +80,15 @@
 
       register(audioConfig.keybinding, () => {
         togglePlayAudio()
-      }).catch(() => {
-        audio = null
-        audioConfig = null
       })
+        .catch(() => {
+          audio = null
+          audioConfig = null
+        })
+        .then(() => {
+          unregisterPreviousShortcut = async () =>
+            await unregister(`${audioConfig.keybinding}`)
+        })
     })
 
     audio = new Audio(await getAudioByName(audioConfig.name))
@@ -141,12 +156,15 @@
           keybindingInput.focus()
           keybindingInput.click()
 
-          document.addEventListener("click", (event) => {
-            if (event.target != keybindingInput) return
+          document.addEventListener("click", async (event) => {
+            if (!(event.target instanceof HTMLElement)) return
+            if (
+              event.target == keybindingInput ||
+              event.target.closest(".context-menu")
+            )
+              return
 
-            keybindingInput.disabled = true
-
-            // TODO: add changing keybinding and savng it
+            await changeKeybind()
 
             disarm()
           })
@@ -217,4 +235,5 @@
   </div>
 {:else}
   <p class="text-base">in loading</p>
+  <!-- TODO: add loading animation -->
 {/if}

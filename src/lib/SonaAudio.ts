@@ -9,7 +9,7 @@ import {
 } from "@tauri-apps/api/fs"
 import { BaseDirectory } from "@tauri-apps/api/path"
 import type { SonaAudioConfigFile } from "./SonaAudioFile"
-import { decode } from "@msgpack/msgpack"
+import { decode, encode } from "@msgpack/msgpack"
 
 export const getAudioNames = async () => {
   if (!(await exists("audios/", { dir: BaseDirectory.AppLocalData })))
@@ -69,4 +69,16 @@ export const removeAudioByName = async (name: string): Promise<boolean> => {
   ])
 
   return true
+}
+
+export const updateAudioConfig = async (name: string, config: SonaAudioConfigFile) => {
+  const names = await getAudioNames()
+
+  if (!names.includes(name)) return false
+
+  await writeBinaryFile(`audios/${name}.config.sonaaudio`, encode(config), {
+    dir: BaseDirectory.AppLocalData,
+  })
+
+  return structuredClone(config)
 }
