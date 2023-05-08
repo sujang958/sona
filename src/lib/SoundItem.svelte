@@ -9,9 +9,9 @@
   import { onDestroy } from "svelte"
   import { getInputKeybinding } from "./GetInputKeybinding"
   import {
-    getAudioByName,
-    getAudioConfigByName,
-    removeAudioByName,
+    getAudioById,
+    getAudioConfigById,
+    removeAudioById,
     updateAudioConfig,
   } from "./SonaAudio"
   import type { SonaAudioConfigFile } from "./SonaAudioFile"
@@ -29,7 +29,7 @@
     }
   })
 
-  export let name: string = "Not Found"
+  export let id: string = "Not Found"
   export let onRemove: () => any | Promise<any> = () => {}
 
   let image = "icon.ico"
@@ -39,6 +39,7 @@
   let audioPlaying = false
 
   let keybindingInput: HTMLInputElement
+  let nameInput: HTMLInputElement
 
   let unregisterPreviousShortcut: () => any = () => false
 
@@ -54,7 +55,7 @@
     if (!(await confirm("You sure?"))) return disarm()
 
     audio.remove()
-    await removeAudioByName(audioConfig.name)
+    await removeAudioById(id)
     onRemove()
   }
 
@@ -65,35 +66,21 @@
     } else audio.pause()
   }
 
-  const changeKeybind = async () => {
-    await unregisterPreviousShortcut()
-    await updateAudioConfig(name, audioConfig)
-    await loadAudio()
-    keybindingInput.disabled = true
-  }
-
   const loadAudio = async () => {
-    audioConfig = await getAudioConfigByName(name)
+    audioConfig = await getAudioConfigById(id)
 
-    isRegistered(audioConfig.keybinding).then(async (yes) => {
-      if (yes) await unregister(audioConfig.keybinding)
+    const registered = await isRegistered(audioConfig.keybinding)
 
-      register(audioConfig.keybinding, () => {
-        togglePlayAudio()
-      })
-        .catch(() => {
-          audio = null
-          audioConfig = null
-        })
-        .then(() => {
-          const copy = audioConfig.keybinding.trim()
-          unregisterPreviousShortcut = async () => {
-            await unregister(copy)
-          }
-        })
+    if (registered) await unregister(audioConfig.keybinding)
+
+    await register(audioConfig.keybinding, () => {
+      togglePlayAudio()
+    }).then(() => {
+      const copy = audioConfig.keybinding.trim()
+      unregisterPreviousShortcut = async () => await unregister(copy)
     })
 
-    audio = new Audio(await getAudioByName(audioConfig.name))
+    audio = new Audio(await getAudioById(id))
 
     audio.addEventListener("pause", () => {
       audioPlaying = false
@@ -113,6 +100,31 @@
   onDestroy(() => {
     unregister(audioConfig.keybinding)
   })
+
+  const changeConfig = (target: "keybind" | "name") => {
+    let input = keybindingInput
+    if (target == "name") input = nameInput
+
+    input.disabled = false
+    input.focus()
+    input.click()
+
+    const onClick = async (event) => {
+      if (!(event.target instanceof HTMLElement)) return
+      if (event.target == input || event.target.closest(".context-menu")) return
+
+      await unregisterPreviousShortcut()
+      await updateAudioConfig(id, audioConfig)
+      await loadAudio()
+
+      input.disabled = true
+      input.blur()
+      
+      document.removeEventListener("click", onClick)
+    }
+
+    document.addEventListener("click", onClick)
+  }
 </script>
 
 {#if audio && audioConfig}
@@ -145,30 +157,17 @@
       style="transform: translateX(min(var(--mouse-x), calc(100vw - 100%))) translateY(min(var(--mouse-y), calc(100vh - 100%)));"
     >
       <p
+        on:click={() => {
+          changeConfig("name")
+        }}
         class="text-base transition duration-300 hover:bg-white/30 py-1 px-4 rounded-lg"
       >
         Rename
       </p>
       <p
         class="text-base transition duration-300 hover:bg-white/30 py-1 px-4 rounded-lg"
-        on:click={async () => {
-          keybindingInput.disabled = false
-          keybindingInput.focus()
-          keybindingInput.click()
-
-          const onClick = async (event) => {
-            if (!(event.target instanceof HTMLElement)) return
-            if (
-              event.target == keybindingInput ||
-              event.target.closest(".context-menu")
-            )
-              return
-
-            await changeKeybind()
-            document.removeEventListener("click", onClick)
-          }
-
-          document.addEventListener("click", onClick)
+        on:click={() => {
+          changeConfig("keybind")
         }}
       >
         Change keybinding
@@ -216,7 +215,13 @@
     </div>
     <div class="py-2" />
     <div class="text-center">
-      <p class="text-xl font-bold">{name.split(".sonaaudio")[0]}</p>
+      <input
+        type="text"
+        bind:value={audioConfig.name}
+        bind:this={nameInput}
+        disabled
+        class="appearance-none z-50 bg-transparent border-none text-2xl font-bold text-center rounded-lg w-36 p-0.5"
+      />
       <div class="relative">
         <input
           type="text"

@@ -13,7 +13,8 @@
   "dependencies": {
     "@msgpack/msgpack": "^2.8.0",
     "@tailwindcss/forms": "^0.5.3",
-    "@tauri-apps/api": "^1.2.0"
+    "@tauri-apps/api": "^1.2.0",
+    "nanoid": "^4.0.2"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^2.0.0",

@@ -1,18 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import SoundItem from "./lib/SoundItem.svelte"
-  import { BaseDirectory } from "@tauri-apps/api/path"
-  import { encode, decode } from "@msgpack/msgpack"
-  import {
-    exists,
-    createDir,
-    readDir,
-    readBinaryFile,
-    writeBinaryFile,
-    writeTextFile,
-  } from "@tauri-apps/api/fs"
-  import type { SonaAudioConfigFile } from "./lib/SonaAudioFile"
-  import { getAudioNames } from "./lib/SonaAudio"
+  import { addAudio, getAudioIds } from "./lib/SonaAudio"
   import { getInputKeybinding } from "./lib/GetInputKeybinding"
 
   let audioFileSelector: HTMLInputElement
@@ -25,30 +14,13 @@
   let audios: string[] = []
 
   const loadAudio = async () => {
-    audios = await getAudioNames()
+    audios = await getAudioIds()
   }
 
   const finishAddingAudio = async () => {
-    // TODO: 리팩토링, 이 함수를 sonaaudio.ts 로 옮기기
     if (audioName.length < 1) return
 
-    const audios = await getAudioNames()
-
-    if (audios.includes(audioName)) return await cancelAddingAudio()
-
-    await writeTextFile(`audios/${audioName}.sonaaudio`, audioContent, {
-      dir: BaseDirectory.AppLocalData,
-    })
-    await writeBinaryFile(
-      `audios/${audioName}.config.sonaaudio`,
-      encode({
-        keybinding: audioKeybind,
-        name: audioName,
-      } as SonaAudioConfigFile),
-      {
-        dir: BaseDirectory.AppLocalData,
-      }
-    )
+    await addAudio(audioContent, { keybinding: audioKeybind, name: audioName })
 
     await loadAudio()
     await cancelAddingAudio()
@@ -160,7 +132,7 @@
     >
       {#each audios as audio}
         <SoundItem
-          name={audio}
+          id={audio}
           onRemove={() => {
             loadAudio()
           }}
